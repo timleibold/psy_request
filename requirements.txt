@@ -1,0 +1,6 @@
+pydantic
+langchain
+langchain_community
+openai
+python-docx
+streamlit
