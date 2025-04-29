@@ -1,39 +1,68 @@
 import sounddevice as sd
 import soundfile as sf
 
-def record_memo(filename: str, duration: float = 300, samplerate: int = 16000):
+# functions/record_audio.py
+import sounddevice as sd
+import soundfile as sf
+import threading
+import numpy as np
+
+# Globals for the recording thread and control
+_recording_thread = None
+_stop_event = threading.Event()
+_frames = []
+_filename = None
+_samplerate = 16000
+_channels = 1
+
+def start_recording(filename: str, samplerate: int = 16000):
     """
-    Records audio from the default microphone and writes it to `filename`.
-    If duration is None, it records until you hit Ctrl+C.
+    Start recording audio from the default microphone into `filename`.
+    Recording runs in a background thread until stop_recording() is called.
     """
-    channels = 1
-    try:
-        if duration:
-            print(f"Recording for {duration} seconds…")
-            data = sd.rec(int(duration * samplerate), samplerate=samplerate, channels=channels)
-            sd.wait()
-        else:
-            print("Recording… press Ctrl+C to stop.")
-            # start an infinite stream that we append to a list
-            frames = []
-            def callback(indata, frames_count, time, status):
-                if status:
-                    print("⚠️", status)
-                frames.append(indata.copy())
-            with sd.InputStream(samplerate=samplerate, channels=channels, callback=callback):
-                while True:
-                    pass
-            data = b"".join(frames)
-        sf.write(filename, data, samplerate)
-        print(f"Saved recording to {filename}")
-    except KeyboardInterrupt:
-        # if user stopped early without a fixed duration
-        if not duration:
-            data = b"".join(frames)
-            sf.write(filename, data, samplerate)
-            print(f"\nStopped and saved recording to {filename}")
-        else:
-            raise
+    global _recording_thread, _stop_event, _frames, _filename, _samplerate
+
+    if _recording_thread and _recording_thread.is_alive():
+        print("⚠️  Recording already in progress.")
+        return
+
+    _filename = filename
+    _samplerate = samplerate
+    _frames = []
+    _stop_event.clear()
+
+    def _record_loop():
+        def callback(indata, frames_count, time_info, status):
+            if status:
+                print("⚠️", status)
+            _frames.append(indata.copy())
+
+        with sd.InputStream(samplerate=_samplerate, channels=_channels, callback=callback):
+            print(f"Recording... call stop_recording() to finish.")
+            while not _stop_event.is_set():
+                sd.sleep(100)
+
+        # Once stopped, concatenate frames and write file
+        data = np.concatenate(_frames, axis=0)
+        sf.write(_filename, data, _samplerate)
+        print(f"✅ Saved recording to {_filename}")
+
+    _recording_thread = threading.Thread(target=_record_loop, daemon=True)
+    _recording_thread.start()
+
+def stop_recording():
+    """
+    Stop the background recording and write the WAV file.
+    """
+    global _recording_thread, _stop_event
+
+    if not _recording_thread:
+        print("⚠️  No active recording to stop.")
+        return
+
+    _stop_event.set()
+    _recording_thread.join()
+    print("⏹️  Recording stopped.")
 
 # Usage examples:
 # 1) record a 30-second memo

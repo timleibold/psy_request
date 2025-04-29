@@ -42,9 +42,15 @@ def LLMCall(transkript_text: str) -> dict:
 
     # 3) Baue Dein Prompt
     system = SystemMessagePromptTemplate.from_template(
-        "Du bist ein Assistent, der aus dem gegebenen Transkript einen vollständigen Psychotherapie-Antrag "
-        "(7-Abschnitte plus Anrede und Signatur) **ausschließlich als JSON** gemäß dem Pydantic-Schema erstellt. "
-        "Sprache: Deutsch. Förmlich, keine zusätzlichen Informationen."
+        """Du bist ein Assistent, der aus dem gegebenen Transkript einen vollständigen Psychotherapie-Antrag erstellt. 
+        Der Antrag besteht aus 6 Abschnitten plus Anrede und Signatur) und wird **ausschließlich als JSON** gemäß dem Pydantic-Schema erstellt.
+        
+        Beachte insbesondere Folgende Punkte: 
+        1. Sprache ist Deutsch, förmlich und orientiert sich an der psychotherapeuthischen Fachsprache.
+        2. unvollständige Sätze sollen ausfomuliert werden
+        3. achte genau auf Formulierung, Rechtschreibung und Grammatik
+        4. Erstelle dort, wo es hilfreich ist und den Sprachfluss unterstützt, Absätze und Überleitungen. 
+        5. Verwende, wo es sich anbietet Aufzählungen"""
     )
 
     human = HumanMessagePromptTemplate.from_template("""
@@ -80,3 +86,4 @@ def LLMCall(transkript_text: str) -> dict:
     )
     data = antrag_obj.model_dump()
     return data
+

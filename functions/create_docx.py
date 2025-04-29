@@ -5,7 +5,7 @@ from docx import Document
 # antrag_obj: PsychotherapieAntrag
 
 # Convert Pydantic model to plain dict
-def create_docx(data):
+def create_docx(data, doc_path="Psychotherapie_Antrag.docx"):
     # Map field names to their human-readable titles
     titles = {
         'relevante_soziodemographische_daten': 
