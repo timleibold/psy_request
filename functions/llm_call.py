@@ -64,7 +64,7 @@ def LLMCall(transkript_text: str) -> dict:
 
     # 4) LLM und Chain initialisieren
     llm = ChatOpenAI(
-        model="gpt-4",
+        model="gpt-4-turbo",
         temperature=0.0,
         api_key=os.getenv("OPENAI_API_KEY")
     )
