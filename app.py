@@ -9,7 +9,7 @@ import av, numpy as np, soundfile as sf
 st.set_page_config(page_title="Psychotherapie‐Antrag Generator", layout="centered")
 st.title("📝 Psychotherapie‐Memo aufnehmen und Antrag erstellen")
 
-# Initialize recording_done flag
+# Initialize flag for completed recording
 if "recording_done" not in st.session_state:
     st.session_state["recording_done"] = False
 
@@ -22,10 +22,11 @@ class Recorder(AudioProcessorBase):
         self.frames.append(arr)
         return None
     def on_stop(self):
+        # Called when user stops recording
         data = np.concatenate(self.frames, axis=0)
-        # Overwrite a single memo.wav every time
+        # Overwrite a single memo.wav on each stop
         sf.write("memo.wav", data, samplerate=48000)
-        # Flag that a recording is ready
+        # Mark that recording is ready
         st.session_state["recording_done"] = True
         st.success("Aufnahme gespeichert als memo.wav")
 
@@ -40,14 +41,14 @@ webrtc_ctx = webrtc_streamer(
 if webrtc_ctx.state.playing:
     st.info("Aufnahme läuft… Klicke Stop, um zu beenden.")
 
-# Show Transkribieren button once recording is done
+# Nach Stopp der Aufnahme: Transkribieren-Button zeigen
 if st.session_state.get("recording_done"):
-    if st.button("Transkribieren"):  # Trigger transcription
+    if st.button("Transkribieren"):  # Transkriptionsschritt
         with open("memo.wav", "rb") as wav_file:
             transcript = create_transcript(wav_file)
         st.session_state["transcript"] = transcript
         st.success("Transkription abgeschlossen")
-        # Reset flag for next recording
+        # Zurücksetzen für nächste Aufnahme
         st.session_state["recording_done"] = False
 
 # If transcript is ready, display and process
