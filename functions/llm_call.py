@@ -8,6 +8,8 @@ from langchain.output_parsers import PydanticOutputParser
 from langchain.chat_models import ChatOpenAI
 from langchain import LLMChain
 import os
+import streamlit as st
+
 
 def LLMCall(transkript_text: str) -> dict:
     # 1) Dein Pydantic-Schema
@@ -62,11 +64,15 @@ def LLMCall(transkript_text: str) -> dict:
 
     prompt = ChatPromptTemplate.from_messages([system, human])
 
+    
     # 4) LLM und Chain initialisieren
+    openai_key = st.secrets["OPENAI_API_KEY"]
+    os.environ["OPENAI_API_KEY"] = openai_key
     llm = ChatOpenAI(
         model="gpt-4-turbo",
         temperature=0.0,
-        api_key=os.getenv("OPENAI_API_KEY")
+        api_key = openai_key
+        #api_key=os.getenv("OPENAI_API_KEY")
     )
 
     chain = LLMChain(
