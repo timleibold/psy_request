@@ -9,6 +9,10 @@ import av, numpy as np, soundfile as sf
 st.set_page_config(page_title="Psychotherapie‐Antrag Generator", layout="centered")
 st.title("📝 Psychotherapie‐Memo aufnehmen und Antrag erstellen")
 
+# Initialize recording flag
+if "recording_done" not in st.session_state:
+    st.session_state["recording_done"] = False
+
 class Recorder(AudioProcessorBase):
     def __init__(self):
         self.frames = []
@@ -30,6 +34,7 @@ webrtc_ctx = webrtc_streamer(
     mode=WebRtcMode.SENDONLY,
     audio_processor_factory=Recorder,
     media_stream_constraints={"audio": True, "video": False},
+    async_processing=True,
 )
 
 if webrtc_ctx.state.playing:
