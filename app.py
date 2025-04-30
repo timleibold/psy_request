@@ -3,7 +3,7 @@ from functions.create_transcript import create_transcript
 from functions.llm_call import LLMCall
 from functions.create_docx import create_docx
 
-import os
+import uuid
 
 from streamlit_webrtc import webrtc_streamer, WebRtcMode, AudioProcessorBase
 import av, numpy as np, soundfile as sf
@@ -22,8 +22,13 @@ class Recorder(AudioProcessorBase):
     def on_stop(self):
         # Called when user stops recording
         data = np.concatenate(self.frames, axis=0)
-        sf.write("memo.wav", data, samplerate=48000)
-        st.success("Aufnahme gespeichert als memo.wav")
+        # Generate a unique filename for this recording
+        file_id = uuid.uuid4().hex
+        filename = f"memo_{file_id}.wav"
+        sf.write(filename, data, samplerate=48000)
+        # Save path in session state
+        st.session_state["memo_file"] = filename
+        st.success(f"Aufnahme gespeichert als {filename}")
 
 webrtc_ctx = webrtc_streamer(
     key="recorder",
@@ -36,10 +41,12 @@ webrtc_ctx = webrtc_streamer(
 if webrtc_ctx.state.playing:
     st.info("Aufnahme läuft… Klicke Stop, um zu beenden.")
 
-# Wenn Aufnahme beendet und Datei existiert, zeige Transkriptions-Button
-if not webrtc_ctx.state.playing and os.path.exists("memo.wav"):
+# Wenn Aufnahme beendet und eine neue Datei vorhanden ist, zeige Transkriptions-Button
+if not webrtc_ctx.state.playing and "memo_file" in st.session_state:
+    memo_file = st.session_state["memo_file"]
     if st.button("Transkribieren"):  # Next step: transcription
-        transcript = create_transcript(open("memo.wav", "rb"))
+        with open(memo_file, "rb") as wav_file:
+            transcript = create_transcript(wav_file)
         st.session_state["transcript"] = transcript
         st.success("Transkription abgeschlossen")
 
