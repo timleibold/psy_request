@@ -2,50 +2,32 @@
 import streamlit as st
 import threading, webbrowser, time
 import sys
-from functions.record_audio_loc import start_recording, stop_recording
 from functions.create_transcript import create_transcript
 from functions.llm_call import LLMCall
 from functions.create_docx import create_docx
+from audio_recorder_streamlit import audio_recorder
+import tempfile
 
 st.set_page_config(page_title="Psychotherapie‐Antrag Generator", layout="centered")
 st.title("📝 Psychotherapie‐Memo aufnehmen und Antrag erstellen")
 
-# --- Session state defaults ---
-if "is_recording" not in st.session_state:
-    st.session_state.is_recording = False
-if "memo_ready" not in st.session_state:
-    st.session_state.memo_ready = False
+st.subheader("🎙️ Sprachmemo aufnehmen")
 
-# --- Callbacks to flip state and manage recording ---
-def _on_start():
-    start_recording("memo.wav")
-    st.session_state.is_recording = True
-    st.session_state.memo_ready = False
+audio_bytes = audio_recorder(
+    text="Klick hier zum Aufnehmen",
+    recording_color="#e8b62c",
+    neutral_color="#6aa36f",
+    icon_name="microphone",
+    icon_size="6x"
+)
 
-def _on_stop():
-    stop_recording()
-    st.session_state.is_recording = False
-    st.session_state.memo_ready = True
+if audio_bytes:
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmpfile:
+        tmpfile.write(audio_bytes)
+        wav_path = tmpfile.name
 
-# --- Buttons in one slot ---
-slot = st.empty()
-if not st.session_state.is_recording:
-    slot.button(
-        "🎙️ Start Recording",
-        key="start_btn",
-        on_click=_on_start
-    )
-else:
-    slot.button(
-        "⏹️ Stop Recording",
-        key="stop_btn",
-        on_click=_on_stop
-    )
-
-# --- Once stopped, process the memo ---
-if st.session_state.memo_ready:
-    # 1) Transcription
-    transcript = create_transcript(open("memo.wav", "rb"))
+    # 1) Transkription
+    transcript = create_transcript(open(wav_path, "rb"))
     st.subheader("🎧 Transkript")
     st.text_area("", transcript, height=200)
 
@@ -71,4 +53,3 @@ if st.session_state.memo_ready:
 # 1. pip install -r requirements.txt 
 # 2. streamlit run app.py
 # 3. to stop the server, press Ctrl+C in the terminal
-
