@@ -13,17 +13,33 @@ st.title("📝 Psychotherapie‐Memo aufnehmen und Antrag erstellen")
 
 st.subheader("🎙️ Sprachmemo aufnehmen")
 
-audio_bytes = audio_recorder(
-    text="Klick hier zum Aufnehmen",
-    recording_color="#e8b62c",
-    neutral_color="#6aa36f",
-    icon_name="microphone",
-    icon_size="6x"
-)
+if "recording" not in st.session_state:
+    st.session_state.recording = False
+if "start_time" not in st.session_state:
+    st.session_state.start_time = None
+if "audio_data" not in st.session_state:
+    st.session_state.audio_data = None
 
-if audio_bytes:
+if not st.session_state.recording:
+    if st.button("🎙️ Aufnahme starten"):
+        st.session_state.recording = True
+        st.session_state.start_time = time.time()
+else:
+    elapsed = int(time.time() - st.session_state.start_time)
+    st.success(f"⏱ Aufnahme läuft: {elapsed} Sekunden")
+    st.session_state.audio_data = audio_recorder(
+        text="⏹️ Stopp",
+        recording_color="#e63946",
+        neutral_color="#457b9d",
+        icon_name="stop",
+        icon_size="6x"
+    )
+    if st.session_state.audio_data:
+        st.session_state.recording = False
+
+if st.session_state.audio_data:
     with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmpfile:
-        tmpfile.write(audio_bytes)
+        tmpfile.write(st.session_state.audio_data)
         wav_path = tmpfile.name
 
     # 1) Transkription
