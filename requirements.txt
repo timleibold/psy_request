@@ -6,10 +6,7 @@ python-docx
 streamlit
 audio-recorder-streamlit>=0.0.10
 sounddevice
-streamlit-audiorec
 pydub
 streamlit-webrtc
 av
 numpy
-soundfile
-streamlit-audio-recorder
