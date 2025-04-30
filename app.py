@@ -66,6 +66,7 @@ if st.session_state.memo_ready:
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         )
 
+
 #run by typing in terminal:
 # 1. pip install -r requirements.txt 
 # 2. streamlit run app.py
