@@ -1,6 +1,16 @@
 import io
 import streamlit as st
-from audio_recorder_streamlit import audio_recorder
+import importlib
+
+def audio_recorder():
+    """
+    Proxy to the external audio-recorder-streamlit component.
+    Renders an in-browser recorder and returns raw audio bytes or None.
+    """
+    # Dynamically import the installed package to avoid shadowing
+    pkg = importlib.import_module("audio_recorder_streamlit")
+    audio_bytes = pkg.audio_recorder()
+    return audio_bytes
 
 
 def start_recording(filename: str):
