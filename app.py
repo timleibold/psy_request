@@ -1,45 +1,74 @@
+# app.py
 import streamlit as st
-import tempfile
-import os
-
-from audio_recorder_streamlit import audio_recorder
+import threading, webbrowser, time
+import sys
+from functions.record_audio_loc import start_recording, stop_recording
 from functions.create_transcript import create_transcript
 from functions.llm_call import LLMCall
 from functions.create_docx import create_docx
 
-st.title("Psychotherapie-Antrag Generator")
+st.set_page_config(page_title="Psychotherapie‐Antrag Generator", layout="centered")
+st.title("📝 Psychotherapie‐Memo aufnehmen und Antrag erstellen")
 
-st.markdown("""
-1. Nehmen Sie eine WAV-Datei auf oder laden Sie sie hoch.
-2. Die Datei wird in ein Transkript umgewandelt.
-3. Daraus wird automatisch ein Antragsentwurf erzeugt und als DOCX-Datei bereitgestellt.
-""")
+# --- Session state defaults ---
+if "is_recording" not in st.session_state:
+    st.session_state.is_recording = False
+if "memo_ready" not in st.session_state:
+    st.session_state.memo_ready = False
 
-st.markdown("### Audioaufnahme starten")
-audio_bytes = audio_recorder(text="Aufnahme starten", recording_color="#e8b62c", neutral_color="#6aa36f", icon_size="2x")
+# --- Callbacks to flip state and manage recording ---
+def _on_start():
+    start_recording("memo.wav")
+    st.session_state.is_recording = True
+    st.session_state.memo_ready = False
 
-if audio_bytes is not None:
-    # Speichern der aufgenommenen Datei temporär
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
-        tmp_file.write(audio_bytes)
-        temp_wav_path = tmp_file.name
+def _on_stop():
+    stop_recording()
+    st.session_state.is_recording = False
+    st.session_state.memo_ready = True
 
-    st.success("Datei erfolgreich aufgenommen.")
+# --- Buttons in one slot ---
+slot = st.empty()
+if not st.session_state.is_recording:
+    slot.button(
+        "🎙️ Start Recording",
+        key="start_btn",
+        on_click=_on_start
+    )
+else:
+    slot.button(
+        "⏹️ Stop Recording",
+        key="stop_btn",
+        on_click=_on_stop
+    )
 
-    with st.spinner("Erzeuge Transkript..."):
-        transcript = create_transcript(temp_wav_path)
-        st.text_area("Transkript", transcript, height=300)
+# --- Once stopped, process the memo ---
+if st.session_state.memo_ready:
+    # 1) Transcription
+    transcript = create_transcript(open("memo.wav", "rb"))
+    st.subheader("🎧 Transkript")
+    st.text_area("", transcript, height=200)
 
-    with st.spinner("Erzeuge Rohfassung des Antrags..."):
-        llm = LLMCall()
-        json_output = llm(transcript)
-        st.json(json_output)
+    # 2) LLM Call
+    st.info("Erstelle Psychotherapie‐Antrag…")
+    antrag_json = LLMCall(transcript)
+    st.subheader("📄 Antrag als JSON")
+    st.json(antrag_json)
 
-    with st.spinner("Erzeuge DOCX-Datei..."):
-        docx_path = create_docx(json_output)
+    # 3) DOCX & Download
+    doc_path = "Psychotherapie_Antrag.docx"
+    create_docx(antrag_json, doc_path)
+    with open(doc_path, "rb") as doc_file:
+        st.download_button(
+            label="💾 Word-Dokument herunterladen",
+            data=doc_file,
+            file_name="Psychotherapie_Antrag.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
 
-    with open(docx_path, "rb") as file:
-        st.download_button("DOCX herunterladen", file, file_name="antrag.docx")
 
-    # Temporäre Datei entfernen
-    os.remove(temp_wav_path)
+#run by typing in terminal:
+# 1. pip install -r requirements.txt 
+# 2. streamlit run app.py
+# 3. to stop the server, press Ctrl+C in the terminal
+
