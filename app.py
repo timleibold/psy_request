@@ -13,10 +13,10 @@ class Recorder(AudioProcessorBase):
     def __init__(self):
         self.frames = []
     def recv(self, frame: av.AudioFrame) -> av.AudioFrame:
-        # Collect audio frames
+        # Store incoming audio frames without sending them back
         arr = frame.to_ndarray().T  # shape: (samples, channels)
         self.frames.append(arr)
-        return frame
+        return None
     def on_stop(self):
         # Called when user stops recording
         data = np.concatenate(self.frames, axis=0)
@@ -26,10 +26,9 @@ class Recorder(AudioProcessorBase):
 
 webrtc_ctx = webrtc_streamer(
     key="recorder",
-    mode=WebRtcMode.SENDRECV,
+    mode=WebRtcMode.SENDONLY,
     audio_processor_factory=Recorder,
     media_stream_constraints={"audio": True, "video": False},
-    async_processing=True,
 )
 
 if webrtc_ctx.state.playing:
