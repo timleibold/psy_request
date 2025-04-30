@@ -6,11 +6,11 @@ from functions.create_docx import create_docx
 st.set_page_config(page_title="Psychotherapie‐Antrag Generator", layout="centered")
 st.title("📝 Psychotherapie‐Memo aufnehmen und Antrag erstellen")
 
-from audio_recorder_streamlit import audio_recorder
+from st_audiorec import st_audiorec
 
 # --- Browser-based audio recorder ---
-audio_bytes = audio_recorder()
-if audio_bytes:
+audio_bytes = st_audiorec()
+if audio_bytes is not None:
     # Save recording to file
     with open("memo.wav", "wb") as f:
         f.write(audio_bytes)
