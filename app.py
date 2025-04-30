@@ -20,9 +20,12 @@ class Recorder(AudioProcessorBase):
     def on_stop(self):
         # Called when user stops recording
         data = np.concatenate(self.frames, axis=0)
-        # Write to WAV; adjust samplerate if needed (default is 48000)
         sf.write("memo.wav", data, samplerate=48000)
         st.success("Aufnahme gespeichert als memo.wav")
+        # Automatically transcribe on stop
+        transcript = create_transcript(open("memo.wav", "rb"))
+        st.session_state["transcript"] = transcript
+        st.info("Transkription abgeschlossen")
 
 webrtc_ctx = webrtc_streamer(
     key="recorder",
@@ -33,10 +36,10 @@ webrtc_ctx = webrtc_streamer(
 
 if webrtc_ctx.state.playing:
     st.info("Aufnahme läuft… Klicke Stop, um zu beenden.")
-elif webrtc_ctx.state == "ENDED":
-    # Once stopped, process the saved WAV
-    with open("memo.wav", "rb") as wav_file:
-        transcript = create_transcript(wav_file)
+
+# If transcript is ready, display and process
+if "transcript" in st.session_state:
+    transcript = st.session_state["transcript"]
     st.subheader("🎧 Transkript")
     st.text_area("", transcript, height=200)
     st.info("Erstelle Psychotherapie‐Antrag…")
