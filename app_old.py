@@ -2,7 +2,7 @@
 import streamlit as st
 import threading, webbrowser, time
 import sys
-from functions.record_audio import start_recording, stop_recording
+from functions.record_audio_loc import start_recording, stop_recording
 from functions.create_transcript import create_transcript
 from functions.llm_call import LLMCall
 from functions.create_docx import create_docx
