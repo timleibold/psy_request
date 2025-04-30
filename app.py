@@ -32,7 +32,7 @@ class Recorder(AudioProcessorBase):
 
 webrtc_ctx = webrtc_streamer(
     key="recorder",
-    mode=WebRtcMode.SENDONLY,
+    mode=WebRtcMode.SENDRECV,
     audio_processor_factory=Recorder,
     media_stream_constraints={"audio": True, "video": False},
     async_processing=True,
