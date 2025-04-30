@@ -5,10 +5,7 @@ openai
 python-docx
 streamlit
 audio-recorder-streamlit>=0.0.10
-sounddevice
 pydub
 streamlit-webrtc
 av
 numpy
-piwin
-# portaudio entfernt – ist keine Python-Bibliothek!
