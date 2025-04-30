@@ -1,6 +1,6 @@
 # app.py
 import streamlit as st
-import threading, webbrowser, time
+import threading, webbrowser
 import sys
 from functions.create_transcript import create_transcript
 from functions.llm_call import LLMCall
@@ -15,18 +15,14 @@ st.subheader("🎙️ Sprachmemo aufnehmen")
 
 if "recording" not in st.session_state:
     st.session_state.recording = False
-if "start_time" not in st.session_state:
-    st.session_state.start_time = None
 if "audio_data" not in st.session_state:
     st.session_state.audio_data = None
 
 if not st.session_state.recording:
     if st.button("🎙️ Aufnahme starten"):
         st.session_state.recording = True
-        st.session_state.start_time = time.time()
 else:
-    elapsed = int(time.time() - st.session_state.start_time)
-    st.success(f"⏱ Aufnahme läuft: {elapsed} Sekunden")
+    st.success("🎤 Aufnahme läuft…")
 
     with st.container():
         col1, col2 = st.columns(2)
