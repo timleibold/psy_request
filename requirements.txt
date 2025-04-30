@@ -9,3 +9,5 @@ pydub
 streamlit-webrtc
 av
 numpy
+sounddevice
+scipy
