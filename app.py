@@ -2,6 +2,7 @@ import streamlit as st
 import tempfile
 import os
 
+from streamlit_audio_recorder import audio_recorder
 from functions.create_transcript import create_transcript
 from functions.llm_call import LLMCall
 from functions.create_docx import create_docx
@@ -14,15 +15,16 @@ st.markdown("""
 3. Daraus wird automatisch ein Antragsentwurf erzeugt und als DOCX-Datei bereitgestellt.
 """)
 
-uploaded_file = st.file_uploader("WAV-Datei aufnehmen oder hochladen", type=["wav"])
+st.markdown("### Audioaufnahme starten")
+audio_bytes = audio_recorder(text="Aufnahme starten", recording_color="#e8b62c", neutral_color="#6aa36f", icon_size="2x")
 
-if uploaded_file is not None:
-    # Speichern der hochgeladenen Datei temporär
+if audio_bytes is not None:
+    # Speichern der aufgenommenen Datei temporär
     with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
-        tmp_file.write(uploaded_file.read())
+        tmp_file.write(audio_bytes)
         temp_wav_path = tmp_file.name
 
-    st.success("Datei erfolgreich hochgeladen.")
+    st.success("Datei erfolgreich aufgenommen.")
 
     with st.spinner("Erzeuge Transkript..."):
         transcript = create_transcript(temp_wav_path)

@@ -12,3 +12,4 @@ streamlit-webrtc
 av
 numpy
 soundfile
+streamlit-audio-recorder
