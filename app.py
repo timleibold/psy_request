@@ -2,7 +2,7 @@ import streamlit as st
 import tempfile
 import os
 
-from streamlit_audio_recorder import audio_recorder
+from audio_recorder_streamlit import audio_recorder
 from functions.create_transcript import create_transcript
 from functions.llm_call import LLMCall
 from functions.create_docx import create_docx
