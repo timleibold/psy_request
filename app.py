@@ -3,13 +3,15 @@ from functions.create_transcript import create_transcript
 from functions.llm_call import LLMCall
 from functions.create_docx import create_docx
 
-import uuid
-
 from streamlit_webrtc import webrtc_streamer, WebRtcMode, AudioProcessorBase
 import av, numpy as np, soundfile as sf
 
 st.set_page_config(page_title="Psychotherapie‐Antrag Generator", layout="centered")
 st.title("📝 Psychotherapie‐Memo aufnehmen und Antrag erstellen")
+
+# Initialize recording_done flag
+if "recording_done" not in st.session_state:
+    st.session_state["recording_done"] = False
 
 class Recorder(AudioProcessorBase):
     def __init__(self):
@@ -20,15 +22,12 @@ class Recorder(AudioProcessorBase):
         self.frames.append(arr)
         return None
     def on_stop(self):
-        # Called when user stops recording
         data = np.concatenate(self.frames, axis=0)
-        # Generate a unique filename for this recording
-        file_id = uuid.uuid4().hex
-        filename = f"memo_{file_id}.wav"
-        sf.write(filename, data, samplerate=48000)
-        # Save path in session state
-        st.session_state["memo_file"] = filename
-        st.success(f"Aufnahme gespeichert als {filename}")
+        # Overwrite a single memo.wav every time
+        sf.write("memo.wav", data, samplerate=48000)
+        # Flag that a recording is ready
+        st.session_state["recording_done"] = True
+        st.success("Aufnahme gespeichert als memo.wav")
 
 webrtc_ctx = webrtc_streamer(
     key="recorder",
@@ -41,14 +40,15 @@ webrtc_ctx = webrtc_streamer(
 if webrtc_ctx.state.playing:
     st.info("Aufnahme läuft… Klicke Stop, um zu beenden.")
 
-# Wenn Aufnahme beendet und eine neue Datei vorhanden ist, zeige Transkriptions-Button
-if not webrtc_ctx.state.playing and "memo_file" in st.session_state:
-    memo_file = st.session_state["memo_file"]
-    if st.button("Transkribieren"):  # Next step: transcription
-        with open(memo_file, "rb") as wav_file:
+# Show Transkribieren button once recording is done
+if st.session_state.get("recording_done"):
+    if st.button("Transkribieren"):  # Trigger transcription
+        with open("memo.wav", "rb") as wav_file:
             transcript = create_transcript(wav_file)
         st.session_state["transcript"] = transcript
         st.success("Transkription abgeschlossen")
+        # Reset flag for next recording
+        st.session_state["recording_done"] = False
 
 # If transcript is ready, display and process
 if "transcript" in st.session_state:
