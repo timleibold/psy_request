@@ -22,10 +22,8 @@ class Recorder(AudioProcessorBase):
         data = np.concatenate(self.frames, axis=0)
         sf.write("memo.wav", data, samplerate=48000)
         st.success("Aufnahme gespeichert als memo.wav")
-        # Automatically transcribe on stop
-        transcript = create_transcript(open("memo.wav", "rb"))
-        st.session_state["transcript"] = transcript
-        st.info("Transkription abgeschlossen")
+        # Mark that recording is done
+        st.session_state["recording_done"] = True
 
 webrtc_ctx = webrtc_streamer(
     key="recorder",
@@ -36,6 +34,13 @@ webrtc_ctx = webrtc_streamer(
 
 if webrtc_ctx.state.playing:
     st.info("Aufnahme läuft… Klicke Stop, um zu beenden.")
+
+# Wenn Aufnahme beendet ist, Button zur Transkription anzeigen
+if st.session_state.get("recording_done", False):
+    if st.button("Transkribieren"):  # Next step: transcription
+        transcript = create_transcript(open("memo.wav", "rb"))
+        st.session_state["transcript"] = transcript
+        st.success("Transkription abgeschlossen")
 
 # If transcript is ready, display and process
 if "transcript" in st.session_state:
