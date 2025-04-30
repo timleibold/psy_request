@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
+
 set -e
+
+# 0) Install Python dependencies
+pip install -r requirements.txt
 
 # 1) Clean old artifacts
 rm -rf build dist PsychotherapieAntrag.spec
@@ -8,7 +12,11 @@ rm -rf build dist PsychotherapieAntrag.spec
 pyinstaller \
   --name PsychotherapieAntrag \
   --onefile \
-  --windowed \                    # on Windows use --noconsole if you don’t want a cmd window
-  --icon=MyIcon.icns \            # your .icns (mac) or .ico (win)
+  --windowed \
+  --icon=MyIcon.icns \
   --add-data "functions:functions" \
-  app.py
+  --collect-all streamlit \
+  "app.py"
+
+# to run this type in Terminal: chmod +x build_app.sh
+# then: ./build_app.sh

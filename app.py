@@ -1,5 +1,7 @@
 # app.py
 import streamlit as st
+import threading, webbrowser, time
+import sys
 from functions.record_audio import start_recording, stop_recording
 from functions.create_transcript import create_transcript
 from functions.llm_call import LLMCall
@@ -63,6 +65,7 @@ if st.session_state.memo_ready:
             file_name="Psychotherapie_Antrag.docx",
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         )
+
 #run by typing in terminal:
 # 1. pip install -r requirements.txt 
 # 2. streamlit run app.py

@@ -4,3 +4,4 @@ langchain_community
 openai
 python-docx
 streamlit
+sounddevice
