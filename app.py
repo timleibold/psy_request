@@ -3,27 +3,46 @@ from functions.create_transcript import create_transcript
 from functions.llm_call import LLMCall
 from functions.create_docx import create_docx
 
+from streamlit_webrtc import webrtc_streamer, WebRtcMode, AudioProcessorBase
+import av, numpy as np, soundfile as sf
+
 st.set_page_config(page_title="Psychotherapie‐Antrag Generator", layout="centered")
 st.title("📝 Psychotherapie‐Memo aufnehmen und Antrag erstellen")
 
-from st_audiorec import st_audiorec
+class Recorder(AudioProcessorBase):
+    def __init__(self):
+        self.frames = []
+    def recv(self, frame: av.AudioFrame) -> av.AudioFrame:
+        # Collect audio frames
+        arr = frame.to_ndarray().T  # shape: (samples, channels)
+        self.frames.append(arr)
+        return frame
+    def on_stop(self):
+        # Called when user stops recording
+        data = np.concatenate(self.frames, axis=0)
+        # Write to WAV; adjust samplerate if needed (default is 48000)
+        sf.write("memo.wav", data, samplerate=48000)
+        st.success("Aufnahme gespeichert als memo.wav")
 
-# --- Browser-based audio recorder ---
-audio_bytes = st_audiorec()
-if audio_bytes is not None:
-    # Save recording to file
-    with open("memo.wav", "wb") as f:
-        f.write(audio_bytes)
-    # 1) Transcription
-    transcript = create_transcript(open("memo.wav", "rb"))
+webrtc_ctx = webrtc_streamer(
+    key="recorder",
+    mode=WebRtcMode.SENDONLY,
+    audio_processor_factory=Recorder,
+    media_stream_constraints={"audio": True, "video": False},
+)
+
+if webrtc_ctx.state.playing:
+    st.info("Aufnahme läuft… Klicke Stop, um zu beenden.")
+elif webrtc_ctx.state == "ENDED":
+    # Once stopped, process the saved WAV
+    with open("memo.wav", "rb") as wav_file:
+        transcript = create_transcript(wav_file)
     st.subheader("🎧 Transkript")
     st.text_area("", transcript, height=200)
-    # 2) LLM Call
     st.info("Erstelle Psychotherapie‐Antrag…")
     antrag_json = LLMCall(transcript)
     st.subheader("📄 Antrag als JSON")
     st.json(antrag_json)
-    # 3) DOCX & Download
     doc_path = "Psychotherapie_Antrag.docx"
     create_docx(antrag_json, doc_path)
     with open(doc_path, "rb") as doc_file:
