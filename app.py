@@ -3,15 +3,13 @@ from functions.create_transcript import create_transcript
 from functions.llm_call import LLMCall
 from functions.create_docx import create_docx
 
+import os
+
 from streamlit_webrtc import webrtc_streamer, WebRtcMode, AudioProcessorBase
 import av, numpy as np, soundfile as sf
 
 st.set_page_config(page_title="Psychotherapie‐Antrag Generator", layout="centered")
 st.title("📝 Psychotherapie‐Memo aufnehmen und Antrag erstellen")
-
-# Initialize recording flag
-if "recording_done" not in st.session_state:
-    st.session_state["recording_done"] = False
 
 class Recorder(AudioProcessorBase):
     def __init__(self):
@@ -26,8 +24,6 @@ class Recorder(AudioProcessorBase):
         data = np.concatenate(self.frames, axis=0)
         sf.write("memo.wav", data, samplerate=48000)
         st.success("Aufnahme gespeichert als memo.wav")
-        # Mark that recording is done
-        st.session_state["recording_done"] = True
 
 webrtc_ctx = webrtc_streamer(
     key="recorder",
@@ -40,8 +36,8 @@ webrtc_ctx = webrtc_streamer(
 if webrtc_ctx.state.playing:
     st.info("Aufnahme läuft… Klicke Stop, um zu beenden.")
 
-# Wenn Aufnahme beendet ist, Button zur Transkription anzeigen
-if st.session_state.get("recording_done", False):
+# Wenn Aufnahme beendet und Datei existiert, zeige Transkriptions-Button
+if not webrtc_ctx.state.playing and os.path.exists("memo.wav"):
     if st.button("Transkribieren"):  # Next step: transcription
         transcript = create_transcript(open("memo.wav", "rb"))
         st.session_state["transcript"] = transcript
