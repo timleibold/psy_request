@@ -1,11 +1,7 @@
-import sounddevice as sd
-import soundfile as sf
-
-# functions/record_audio.py
-import sounddevice as sd
-import soundfile as sf
 import threading
 import numpy as np
+import sounddevice as sd
+import soundfile as sf
 
 # Globals for the recording thread and control
 _recording_thread = None

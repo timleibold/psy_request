@@ -9,7 +9,7 @@ try:
 except (ImportError, OSError):
     RECORD_AVAILABLE = False
 from functions.create_transcript import create_transcript
-from functions.llm_call import LLMCall
+from functions.llm_call_local import LLMCall
 from functions.create_docx import create_docx
 
 st.set_page_config(page_title="Psychotherapie‐Antrag Generator", layout="centered")

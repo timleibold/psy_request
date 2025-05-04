@@ -5,8 +5,10 @@ import sys
 from functions.create_transcript import create_transcript
 from functions.llm_call import LLMCall
 from functions.create_docx import create_docx
-from audio_recorder_streamlit import audio_recorder
 import tempfile
+import sounddevice as sd
+from scipy.io.wavfile import write
+import numpy as np
 
 st.set_page_config(page_title="Psychotherapie‐Antrag Generator", layout="centered")
 st.title("📝 Psychotherapie‐Memo aufnehmen und Antrag erstellen")
@@ -17,28 +19,30 @@ if "is_recording" not in st.session_state:
     st.session_state.is_recording = False
 if "recorded_audio" not in st.session_state:
     st.session_state.recorded_audio = None
+if "recording" not in st.session_state:
+    st.session_state.recording = False
+if "audio_buffer" not in st.session_state:
+    st.session_state.audio_buffer = []
+if "fs" not in st.session_state:
+    st.session_state.fs = 44100
 
 col1, col2 = st.columns(2)
 with col1:
-    if st.button("🎙️ Aufnahme starten"):
-        st.session_state.is_recording = True
+    if st.button("🎙️ Aufnahme starten (lokal)"):
+        st.session_state.recording = True
+        st.session_state.audio_buffer = []
+        st.info("Aufnahme läuft...")
+
 with col2:
-    if st.button("⏹️ Aufnahme beenden"):
-        st.session_state.is_recording = False
+    if st.button("⏹️ Aufnahme stoppen & speichern"):
+        st.session_state.recording = False
+        if st.session_state.audio_buffer:
+            audio_np = np.concatenate(st.session_state.audio_buffer, axis=0)
+            write("aufnahme.wav", st.session_state.fs, audio_np)
+            st.success("Aufnahme gespeichert als aufnahme.wav")
+            st.session_state.recorded_audio = open("aufnahme.wav", "rb").read()
 
-if st.session_state.is_recording:
-    st.info("Aufnahme läuft…")
-    audio = audio_recorder(
-        text="",
-        recording_color="#e63946",
-        neutral_color="#457b9d",
-        icon_name="microphone",
-        icon_size="6x"
-    )
-    if audio:
-        st.session_state.recorded_audio = audio
-
-if st.session_state.recorded_audio:
+if st.session_state.get("recorded_audio"):
     with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmpfile:
         tmpfile.write(st.session_state.recorded_audio)
         wav_path = tmpfile.name
