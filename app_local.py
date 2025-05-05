@@ -10,6 +10,37 @@ from functions.create_docx import create_docx
 st.set_page_config(page_title="Psychotherapie‐Antrag Generator", layout="centered")
 st.title("📝 Psychotherapie‐Memo aufnehmen und Antrag erstellen")
 
+# --- Upload existing audio file ---
+uploaded_file = st.file_uploader(
+    "🔊 Audiodatei hochladen (MP3, WAV, M4A, MP4, WEBM)",
+    type=["mp3", "wav", "m4a", "mpga", "mpeg", "mp4", "webm"]
+)
+if uploaded_file is not None:
+    # Transcribe uploaded file
+    transcript = create_transcript(uploaded_file)
+    st.subheader("🎧 Transkript")
+    st.text_area("", transcript, height=200)
+
+    # Generate the request
+    st.info("Erstelle Psychotherapie‐Antrag…")
+    antrag_json = LLMCall(transcript)
+    st.subheader("📄 Antrag als JSON")
+    st.json(antrag_json)
+
+    # Create and offer download of DOCX
+    doc_path = "Psychotherapie_Antrag.docx"
+    create_docx(antrag_json, doc_path)
+    with open(doc_path, "rb") as doc_file:
+        st.download_button(
+            label="💾 Word-Dokument herunterladen",
+            data=doc_file,
+            file_name="Psychotherapie_Antrag.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
+
+    # Stop further execution to avoid recording UI
+    st.stop()
+
 # --- Session state defaults ---
 if "is_recording" not in st.session_state:
     st.session_state.is_recording = False
