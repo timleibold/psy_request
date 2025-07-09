@@ -12,3 +12,7 @@ numpy
 sounddevice
 scipy
 soundfile
+langchain_ollama
+gradio
+gradio-client
+faster-whisper

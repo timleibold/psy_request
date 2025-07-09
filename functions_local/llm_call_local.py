@@ -8,7 +8,7 @@ from langchain.prompts import (
     HumanMessagePromptTemplate
 )
 from langchain.output_parsers import PydanticOutputParser
-from langchain import LLMChain
+from langchain.chains import LLMChain
 from langchain_ollama.chat_models import ChatOllama  # local chat LLM :contentReference[oaicite:0]{index=0}
 import streamlit as st
 
@@ -45,10 +45,11 @@ def LLMCall(transkript_text: str) -> dict:
 
     # 3) Prompt-Templates
     system = SystemMessagePromptTemplate.from_template(
-        """Du bist ein Assistent, der aus dem gegebenen Transkript einen vollständigen Psychotherapie-Antrag erstellt. 
+        """Du bist ein Assistent, der aus dem gegebenen Transkript einen vollständigen, **ausführlichen und detaillierten** Psychotherapie-Antrag erstellt. 
         Der Antrag besteht aus 6 Abschnitten plus Anrede und Signatur und wird **ausschließlich als JSON** gemäß dem Pydantic-Schema erstellt.
-        …
-        6. Erfinde keine Daten, sondern nutze ausschließlich die Informationen aus dem Transkript"""
+        Stelle sicher, dass alle relevanten Informationen aus dem Transkript **umfassend und gut begründet** in den entsprechenden Abschnitten des Antrags wiedergegeben werden.
+        Erfinde keine Daten, sondern nutze ausschließlich die Informationen aus dem Transkript, aber **formuliere sie so detailliert wie möglich** innerhalb der vorgegebenen Struktur.
+        """
     )
     human = HumanMessagePromptTemplate.from_template(
         """
