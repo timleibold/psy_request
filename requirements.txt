@@ -11,3 +11,4 @@ av
 numpy
 sounddevice
 scipy
+soundfile
